@@ -6,10 +6,18 @@
   tasks:
     - name: Parchar Servidor Linux
       shell: yum -y update
+      register: update_result
       tags: Parchar-Server
+
+    - name: Verificar si el kernel fue actualizado
+      shell: "echo '{{ update_result.stdout }}' | grep -q 'kernel'"
+      register: kernel_updated
+      failed_when: false
+      changed_when: false
     
     - name: Reiniciar Servidor Linux
       reboot:
         reboot_timeout: 180
         become: yes
-        #when: inventory_hostname in ["node1", "node2", "node3"]
+        when: kernel_updated.rc == 0
+        tags: Reiniciar-Server
