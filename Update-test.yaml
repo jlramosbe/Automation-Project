@@ -2,7 +2,7 @@
 - name: Playbook para Parchar Servidores Linux
   hosts: all
   #become_user: 
-  #become: true
+  become: true
   tasks:
     - name: Parchar Servidor Linux
       shell: yum -y update
