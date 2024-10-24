@@ -4,19 +4,26 @@
   #become_user: 
   become: true
   tasks:
-    - name: Parchar Servidor Linux
-      shell: yum -y update
-      register: update_result
+    - name: Instalar dnf-utils (si no está instalado)
+      ansible.builtin.dnf:
+        name: dnf-utils
+        state: present
+
+    - name: Actualizar todos los paquetes
+      ansible.builtin.dnf:
+        name: "*"
+        state: latest
+      register: dnf_update
       tags: Parchar-Server
 
-    - name: Verificar si el kernel fue actualizado
-      shell: "echo '{{ update_result.stdout }}' | grep -q 'kernel'"
-      register: kernel_updated
-      failed_when: false
-      changed_when: false
-    
-    - name: Reiniciar Servidor Linux
+    - name: Verificar si es necesario reiniciar el sistema
+      shell: needs-restarting -r
+      register: restart_needed
+      failed_when: restart_needed.rc not in [0, 1]
+      changed_when: restart_needed.rc == 1
+
+    - name: Reiniciar Servidor Linux si es necesario
       reboot:
         reboot_timeout: 180
-      when: kernel_updated.rc == 0
+      when: restart_needed.rc == 1
       tags: Reiniciar-Server
